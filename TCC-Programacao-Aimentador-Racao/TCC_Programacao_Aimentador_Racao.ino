@@ -131,69 +131,135 @@ void loop() {
     String almag =  result.to<String>();
     json.get(result, "AlimentarAgoraQtde");
     int almqtde = result.to<int>();
-    
-    
-    
-    if(almag == "true"){
-      Serial.print(" Alimentando agora: " );
-      Serial.println(almqtde);
+
+    //Serial.println(Hora());
+    // Alimentação Manual
+    if(almag == "true"){ 
+      Serial.println(" Alimentação Manual" );
+      //Serial.println(almag);
       DiaMesHora();
       motoralimentando(10);
       Firebase.RTDB.setString(&fbdo, "/alimentador01/AlimentarAgora", "false"); // Envia informação para o Firebase // set envia
       delay(5000);
     }
-     
-    Serial.println();
-    
+
+     almag = "false";
+     //Serial.println(almag);
+     Serial.println();
+
+    // Alimentação Automática
     json.get(result, "qtde");
     int qtde = result.to<int>();
     String horaAtual = Hora();
-    String msg = " Alimentação Automática: "+result.to<String>();
-    if(qtde > 0 && horaAtual == "12:00"){
+    String msg = " Alimentação Automática "; //+result.to<String>();
+    if(qtde > 0 && horaAtual == "12:00"){ 
         if(!jaAlimentou){
-           motoralimentando(qtde);
+           //Serial.println(Data());
+           Serial.println(msg);
+           motoralimentando(10);
            jaAlimentou = true;
         }
     }else{
         jaAlimentou = false;
       }
    
-    Serial.println(msg);
+    //Serial.println(msg);
     Serial.println();
     
     delay(1000);
 
-    calcRemainingFood();
+    //calcRemainingFood();
     
   }
 }
 
 // Função responsável por controlar o motor de passo e alimentar
 void motoralimentando(int qtde){
-  String msg = " Alimentar por: "+ (String)qtde;
+  String msg = " Alimentar por: "+ (String)qtde +" segundos";
   Serial.println(msg);
 
-  Serial.println(" Rotating Clockwise...");
+  Serial.println(" Motor funcionando e está liberando ração...");
 
   unsigned long m = millis();
   while (millis() - m < (qtde * 1000)) {
-    motor.setSpeed(260); // Velocidade do Motor 
+    motor.setSpeed(330); // Velocidade do Motor 
     motor.step(steps_per_rev); 
     yield();
   }
 }
+/*
+String Data() {
+  time_t now; // Hora atual
+  struct tm * timeinfo;
+  time(&now);
+  timeinfo = localtime(&now);
+  String timeData = "";
+  
+  int dia = timeinfo->tm_mday;
+  if (dia < 10) {
+    timeData += "0" + (String)dia;
+  } else {
+    timeData += (String)dia;
+  }
+  timeData += "/";
 
 
+  //Pegar o Mês Atual
+  int mes = timeinfo->tm_mon + 1;
+  if (mes < 10) {
+    timeData += "0" + (String)mes;
+  } else {
+    timeData += (String)mes;
+  }
+  timeData += " ";
+  
+  // Hora e minuto
+  int hora = timeinfo->tm_hour;
+  //Serial.println(hora);
+  if (hora < 10) {
+    timeData += "0" + (String)hora;
+  } else {
+    timeData += (String)hora;
+  }
+  timeData += ":";
+  int minuto = timeinfo->tm_min;
+  if (minuto < 10) {
+    timeData += "0" + (String)minuto;
+  } else {
+    timeData += (String)minuto;
+  }
+
+  return timeData;
+}
+*/
 String Hora() {
   time_t now; // Hora atual
   struct tm * timeinfo;
   time(&now);
   timeinfo = localtime(&now);
   String timeAgora = "";
+  /*
+  int dia = timeinfo->tm_mday;
+  if (dia < 10) {
+    timeAgora += "0" + (String)dia;
+  } else {
+    timeAgora += (String)dia;
+  }
+  timeAgora += "/";
 
+
+  //Pegar o Mês Atual
+  int mes = timeinfo->tm_mon + 1;
+  if (mes < 10) {
+    timeAgora += "0" + (String)mes;
+  } else {
+    timeAgora += (String)mes;
+  }
+  timeAgora += " ";
+  */
   // Hora e minuto
   int hora = timeinfo->tm_hour;
-  Serial.println(hora);
+  //Serial.println(hora);
   if (hora < 10) {
     timeAgora += "0" + (String)hora;
   } else {
@@ -227,8 +293,6 @@ String DiaMesHora() {
   Firebase.RTDB.setString(&fbdo, "/alimentador01/UltimaAlimentacao/dia", msg); // Envia informação para o Firebase // set envia
   msg = "";
  
-
-  
   //Pegar o Mês Atual
   int mes = timeinfo->tm_mon + 1;
   if (mes < 10) {
@@ -263,6 +327,7 @@ String DiaMesHora() {
 // Nivel da ração
 void rationLevel(float percentageFood){
   float roundedValue = roundf(percentageFood * 100) / 100;
+  
   Firebase.RTDB.setFloat(&fbdo, "/alimentador01/NivelRacao", roundedValue); // Envia informação para o Firebase // set envia
 }
 
@@ -288,7 +353,7 @@ void calcRemainingFood() {
   if (percentageFood < 0.00) {
     percentageFood = 0.00;
   }
-  Serial.print("Remaining food:\t");
+  Serial.print("Nivel da Ração:\t");
   Serial.print(percentageFood);
   Serial.println(" %");
   delay(5000);
